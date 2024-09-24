@@ -66,6 +66,11 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) handleRequest(w http.ResponseWriter, r *http.Request) {
 	path := r.URL.Path
+	if path == "/health" {
+		s.healthCheck(w)
+		return
+	}
+
 	if len(path) < 2 {
 		http.NotFound(w, r)
 		return
@@ -83,6 +88,10 @@ func (s *Server) handleRequest(w http.ResponseWriter, r *http.Request) {
 	} else {
 		http.NotFound(w, r)
 	}
+}
+
+func (s *Server) healthCheck(w http.ResponseWriter) {
+	w.WriteHeader(http.StatusOK)
 }
 
 func (s *Server) serveRSSFeed(w http.ResponseWriter, r *http.Request, slug string) {
