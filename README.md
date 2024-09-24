@@ -33,8 +33,22 @@ services:
       YOUTUBE_API_KEY: "YOUR_API_KEY_HERE"
       SERVER_URL: "https://your.server.url.here"
       PORT: "8080" # Optional. Default is 8080
+      
+      # If you want to filter the videos using a regex, define it here:
+      # FILTER_PATTERN: "#\d+"
     restart: unless-stopped
 ```
+
+## Configuration
+
+Here is the documentation of the env variables that you can or must configure.
+
+| NAME            | REQUIRED | DEFAULT       | DESCRIPTION                                                                                                                                               |
+|-----------------|----------|---------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------|
+| YOUTUBE_API_KEY | required | ""            | Your YouTube API Key                                                                                                                                      |
+| SERVER_URL      | no       | localhost     | Your server URL to generate download links for the audio files                                                                                            |
+| PORT            | no       | 8080          | Port where the server will listen for incoming connections                                                                                                |
+| FILTER_PATTERN  | no       | ""            | Regex that allows you to filter which videos you want to show as episodes. If empty, all videos will appear. Example: `#\d+` to show videos with `#123`.  |
 
 ## Usage
 
