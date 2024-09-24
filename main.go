@@ -12,12 +12,13 @@ import (
 )
 
 const (
-	apiKeyEnv     = "YOUTUBE_API_KEY"
-	serverUrlEnv  = "SERVER_URL"
-	portEnv       = "PORT"
-	cacheTTL      = 3600 // Default cache expiration time (in seconds)
-	filterPattern = `#\d+`
-	audioDir      = "./audio_cache"
+	apiKeyEnv        = "YOUTUBE_API_KEY"
+	serverUrlEnv     = "SERVER_URL"
+	portEnv          = "PORT"
+	filterPatternEnv = "FILTER_PATTERN"
+
+	cacheTTL = 3600 // Default cache expiration time (in seconds)
+	audioDir = "./audio_cache"
 )
 
 func main() {
@@ -46,7 +47,11 @@ func main() {
 		return
 	}
 
-	server := &Server{apiUrl: serverUrl, youtubeApiKey: apiKey}
+	server := &Server{
+		apiUrl:        serverUrl,
+		youtubeApiKey: apiKey,
+		filterPattern: os.Getenv(filterPatternEnv),
+	}
 	http.Handle("/", server)
 
 	serverPort := fmt.Sprintf(":%d", port)

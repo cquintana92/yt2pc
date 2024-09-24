@@ -26,6 +26,7 @@ var (
 type Server struct {
 	apiUrl        string
 	youtubeApiKey string
+	filterPattern string
 }
 
 // RSSFeed represents the structure of the RSS feed
@@ -103,7 +104,7 @@ func (s *Server) serveRSSFeed(w http.ResponseWriter, r *http.Request, slug strin
 		return
 	}
 
-	filteredItems := filterVideos(playlistItems, filterPattern)
+	filteredItems := s.filterVideos(playlistItems)
 	rssFeed := s.generateRSSFeed(filteredItems, slug)
 
 	w.Header().Set("Content-Type", "application/rss+xml")
@@ -181,9 +182,13 @@ func fetchPlaylistItems(ytService *youtube.Service, playlistID string) ([]*youtu
 	return allItems, nil
 }
 
-func filterVideos(items []*youtube.PlaylistItem, pattern string) []*youtube.PlaylistItem {
+func (s *Server) filterVideos(items []*youtube.PlaylistItem) []*youtube.PlaylistItem {
+	if s.filterPattern == "" {
+		return items
+	}
+
 	var filtered []*youtube.PlaylistItem
-	regex := regexp.MustCompile(pattern)
+	regex := regexp.MustCompile(s.filterPattern)
 
 	for _, item := range items {
 		title := item.Snippet.Title
@@ -191,7 +196,7 @@ func filterVideos(items []*youtube.PlaylistItem, pattern string) []*youtube.Play
 			filtered = append(filtered, item)
 		}
 	}
-	log.Printf("Filtered %d videos out of %d using pattern: %s", len(filtered), len(items), pattern)
+	log.Printf("Filtered %d videos out of %d using pattern: %s", len(filtered), len(items), s.filterPattern)
 	return filtered
 }
 
