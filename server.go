@@ -85,7 +85,7 @@ func (s *Server) handleRequest(w http.ResponseWriter, r *http.Request) {
 	} else if len(parts) == 2 {
 		slug, videoID := parts[0], parts[1]
 		log.Printf("Received audio request for slug: %s, videoID: %s", slug, videoID)
-		serveAudio(w, r, slug, videoID)
+		serveAudio(w, r, videoID)
 	} else {
 		http.NotFound(w, r)
 	}
@@ -197,6 +197,12 @@ func (s *Server) filterVideos(items []*youtube.PlaylistItem) []*youtube.Playlist
 		}
 	}
 	log.Printf("Filtered %d videos out of %d using pattern: %s", len(filtered), len(items), s.filterPattern)
+
+	// Revert the list so new episodes show first
+	for i, j := 0, len(filtered)-1; i < j; i, j = i+1, j-1 {
+		filtered[i], filtered[j] = filtered[j], filtered[i]
+	}
+
 	return filtered
 }
 
@@ -235,7 +241,7 @@ func (s *Server) generateRSSFeed(items []*youtube.PlaylistItem, slug string) RSS
 	return feed
 }
 
-func serveAudio(w http.ResponseWriter, r *http.Request, slug string, videoID string) {
+func serveAudio(w http.ResponseWriter, r *http.Request, videoID string) {
 	audioFilePath := filepath.Join(audioDir, fmt.Sprintf("%s.mp3", videoID))
 
 	if _, err := os.Stat(audioFilePath); os.IsNotExist(err) {
