@@ -8,6 +8,28 @@
 
 ## Installation
 
+### Docker-compose (using prebuilt image)
+
+If you want to go the easy path, just use this docker-compose example:
+
+```yaml
+services:
+  yt2pc:
+    image: ghcr.io/cquintana92/yt2pc:latest
+    ports:
+      - "8080:8080"
+    volumes:
+      - "./audio_cache:/audio_cache"
+    environment:
+      YOUTUBE_API_KEY: "YOUR_API_KEY_HERE"
+      SERVER_URL: "https://your.server.url.here"
+      PORT: "8080" # Optional. Default is 8080
+      
+      # If you want to filter the videos using a regex, define it here:
+      # FILTER_PATTERN: "#\d+"
+    restart: unless-stopped
+```
+
 ### From source
 
 1. Clone the repo: `git clone https://github.com/cquintana92/yt2pc`.
@@ -16,7 +38,7 @@
 4. Fill your variables in `.env`.
 5. `./yt2pc`.
 
-### Docker-compose
+### Docker-compose (self-built)
 
 1. Clone the repo: `git clone https://github.com/cquintana92/yt2pc`.
 2. Set up the following docker-compose file:
