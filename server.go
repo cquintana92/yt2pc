@@ -27,6 +27,7 @@ type Server struct {
 	apiUrl        string
 	youtubeApiKey string
 	filterPattern string
+	convertToMp3  bool
 }
 
 // RSSFeed represents the structure of the RSS feed
@@ -85,7 +86,7 @@ func (s *Server) handleRequest(w http.ResponseWriter, r *http.Request) {
 	} else if len(parts) == 2 {
 		slug, videoID := parts[0], parts[1]
 		log.Printf("Received audio request for slug: %s, videoID: %s", slug, videoID)
-		serveAudio(w, r, videoID)
+		s.serveAudio(w, r, videoID)
 	} else {
 		http.NotFound(w, r)
 	}
@@ -114,8 +115,16 @@ func (s *Server) serveRSSFeed(w http.ResponseWriter, r *http.Request, slug strin
 		log.Printf("Error generating RSS feed for slug %s: %v", slug, err)
 		return
 	}
-	w.Write([]byte(xml.Header))
-	w.Write(xmlData)
+	if _, err := w.Write([]byte(xml.Header)); err != nil {
+		http.Error(w, "Error generating RSS feed", http.StatusInternalServerError)
+		log.Printf("Error generating RSS feed for slug %s: %v", slug, err)
+		return
+	}
+
+	if _, err := w.Write(xmlData); err != nil {
+		http.Error(w, "Error generating RSS feed", http.StatusInternalServerError)
+		log.Printf("Error generating RSS feed for slug %s: %v", slug, err)
+	}
 	log.Printf("Served RSS feed for slug: %s", slug)
 }
 
@@ -241,12 +250,19 @@ func (s *Server) generateRSSFeed(items []*youtube.PlaylistItem, slug string) RSS
 	return feed
 }
 
-func serveAudio(w http.ResponseWriter, r *http.Request, videoID string) {
-	audioFilePath := filepath.Join(audioDir, fmt.Sprintf("%s.mp3", videoID))
+func (s *Server) serveAudio(w http.ResponseWriter, r *http.Request, videoID string) {
+	var ext string
+	if s.convertToMp3 {
+		ext = "mp3"
+	} else {
+		ext = "m4a"
+	}
+
+	audioFilePath := filepath.Join(audioDir, fmt.Sprintf("%s.%s", videoID, ext))
 
 	if _, err := os.Stat(audioFilePath); os.IsNotExist(err) {
 		log.Printf("Audio file not found in cache, downloading videoID: %s", videoID)
-		err := downloadAudio(videoID, audioFilePath)
+		err := s.downloadAudio(videoID, audioFilePath)
 		if err != nil {
 			http.Error(w, "Error downloading audio", http.StatusInternalServerError)
 			log.Printf("Error downloading audio for videoID %s: %v", videoID, err)
@@ -277,12 +293,22 @@ func serveAudio(w http.ResponseWriter, r *http.Request, videoID string) {
 	http.ServeContent(w, r, stat.Name(), stat.ModTime(), audioFile)
 }
 
-func downloadAudio(videoID string, outputPath string) error {
-	cmd := exec.Command("yt-dlp", "-f", "bestaudio", "--extract-audio", "--audio-format", "mp3", "-o", outputPath, fmt.Sprintf("https://www.youtube.com/watch?v=%s", videoID))
+func (s *Server) downloadAudio(videoID string, outputPath string) error {
+	videoUrl := fmt.Sprintf("https://www.youtube.com/watch?v=%s", videoID)
+	var cmd *exec.Cmd
+	if s.convertToMp3 {
+		cmd = exec.Command("yt-dlp", "-f", "bestaudio", "--extract-audio", "--audio-format", "mp3", "-o", outputPath, videoUrl)
+	} else {
+		cmd = exec.Command("yt-dlp", "-f", "bestaudio[ext=m4a]", "-o", outputPath, videoUrl)
+	}
+
+	// Set stdout and stderr to be real-time output
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
 	log.Printf("Running yt-dlp command for videoID: %s", videoID)
-	output, err := cmd.CombinedOutput()
+	err := cmd.Run()
 	if err != nil {
-		log.Printf("yt-dlp error for videoID %s: %v\nOutput: %s", videoID, err, string(output))
+		log.Printf("yt-dlp error for videoID %s: %v", videoID, err)
 		return err
 	}
 	log.Printf("Successfully downloaded audio for videoID: %s", videoID)

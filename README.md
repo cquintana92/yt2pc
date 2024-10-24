@@ -65,12 +65,13 @@ services:
 
 Here is the documentation of the env variables that you can or must configure.
 
-| NAME            | REQUIRED | DEFAULT       | DESCRIPTION                                                                                                                                               |
-|-----------------|----------|---------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------|
-| YOUTUBE_API_KEY | required | ""            | Your YouTube API Key                                                                                                                                      |
-| SERVER_URL      | no       | localhost     | Your server URL to generate download links for the audio files                                                                                            |
-| PORT            | no       | 8080          | Port where the server will listen for incoming connections                                                                                                |
-| FILTER_PATTERN  | no       | ""            | Regex that allows you to filter which videos you want to show as episodes. If empty, all videos will appear. Example: `#\d+` to show videos with `#123`.  |
+| NAME            | REQUIRED | DEFAULT       | DESCRIPTION                                                                                                                                                       |
+|-----------------|----------|---------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| YOUTUBE_API_KEY | required | ""            | Your YouTube API Key                                                                                                                                              |
+| SERVER_URL      | no       | localhost     | Your server URL to generate download links for the audio files                                                                                                    |
+| PORT            | no       | 8080          | Port where the server will listen for incoming connections                                                                                                        |
+| FILTER_PATTERN  | no       | ""            | Regex that allows you to filter which videos you want to show as episodes. If empty, all videos will appear. Example: `#\d+` to show videos with `#123`.          |
+| CONVERT_TO_MP3  | no       | ""            | If set to `true`, forces the conversion to MP3 on the downloaded audio. Otherwise it will download `.m4a` files. *This option increases a lot the download time*. |
 
 ## Usage
 
@@ -86,14 +87,14 @@ https://your.server.url.here/PLAYLIST_ID.xml
 
 The `PLAYLIST_ID` is the final part of a playlist URL. That means, if the playlist URL is `https://www.youtube.com/playlist?list=ABCDEFG`, you would need to use `ABCDEFG` as the `PLAYLIST_ID`.
 
-This request will give back an OPML response that will list the videos on that playlist as if it were podcast episodes, and an URL that allows the podcast client to download the episodes in MP3 format.
+This request will give back an OPML response that will list the videos on that playlist as if it were podcast episodes, and an URL that allows the podcast client to download the episodes in M4A/MP3 format.
 
-Keep in mind that when you ask it to download an episode, it may take a while the first time, as it needs to download the audio from the video and then convert it into mp3, which can take some time (depending on the length of the video and the power of your sever). The converted videos are stored in the `audio_cache` directory, so once it has been downloaded, it won't need to do the process again.
+Keep in mind that when you ask it to download an episode, it may take a while the first time, as it needs to download the audio from the video. If you enable the `CONVERT_TO_MP3` option it will take even longer, as it needs to convert it into mp3, which can take some time (depending on the length of the video and the power of your sever). The converted videos are stored in the `audio_cache` directory, so once it has been downloaded, it won't need to do the process again.
 
-For reference, the URL for downloading a video is:
+For reference, the URL for downloading an episode is:
 
 ```
-https://your.server.here/PLAYLIST_ID/VIDEO_ID.mp3
+https://your.server.here/PLAYLIST_ID/VIDEO_ID
 ```
 
 > **NOTE**: The fetching for the playlist videos is cached for 2 hours, so if you re-request the list of episodes from a playlist within that time range, it won't actually fetch it from YouTube. It's an in-memory cache, so if you restart the server it will be evicted.

@@ -16,6 +16,7 @@ const (
 	serverUrlEnv     = "SERVER_URL"
 	portEnv          = "PORT"
 	filterPatternEnv = "FILTER_PATTERN"
+	convertToMp3Env  = "CONVERT_TO_MP3"
 
 	cacheTTL = 3600 // Default cache expiration time (in seconds)
 	audioDir = "./audio_cache"
@@ -51,6 +52,7 @@ func main() {
 		apiUrl:        serverUrl,
 		youtubeApiKey: apiKey,
 		filterPattern: os.Getenv(filterPatternEnv),
+		convertToMp3:  os.Getenv(convertToMp3Env) == "true",
 	}
 	http.Handle("/", server)
 
